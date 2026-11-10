@@ -1,0 +1,6 @@
+{
+  "name":"phonehub-store","version":"1.0.0","private":true,
+  "description":"PhoneHub USD storefront prototype with cart, demo orders, admin and support tickets",
+  "main":"server.js","scripts":{"start":"node server.js"},
+  "dependencies":{"express":"^4.21.2"}
+}

