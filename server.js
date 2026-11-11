@@ -9,10 +9,10 @@ const DB = path.join(__dirname, 'data.json');
 
 app.use(express.json({limit:'1mb'}));
 
-// FIX: Serve static files from the root directory where index.html lives
+// Serve static files from the root directory where index.html lives
 app.use(express.static(__dirname));
 
-// FIX: Route to explicitly load index.html on root request
+// Route to explicitly load index.html on root request
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -48,4 +48,4 @@ app.patch('/api/admin/orders/:id',admin,(req,res)=>{const db=load();const o=db.o
 app.patch('/api/admin/tickets/:id',admin,(req,res)=>{const db=load();const t=db.tickets.find(x=>x.id===req.params.id);if(!t)return res.status(404).json({error:'Ticket not found.'});if(req.body.status)t.status=String(req.body.status);if(req.body.adminReply!==undefined)t.adminReply=String(req.body.adminReply);save(db);res.json({ok:true,ticket:t});});
 app.patch('/api/admin/settings',admin,(req,res)=>{const db=load();if(req.body.deliveryFee!==undefined){const n=Number(req.body.deliveryFee);if(!Number.isFinite(n)||n<0)return res.status(400).json({error:'Delivery fee must be zero or more.'});db.settings.deliveryFee=n;}if(req.body.pickupLocation!==undefined)db.settings.pickupLocation=String(req.body.pickupLocation);save(db);res.json({ok:true,settings:db.settings});});
 
-app.listen(PORT,()=>console.log(`PhoneHub running at http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`PhoneHub running on port ${PORT}`));
