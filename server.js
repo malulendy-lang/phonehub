@@ -4,22 +4,41 @@ const path = require('path');
 const crypto = require('crypto');
 const app = express();
 
-// Use Railway's dynamic PORT or default to 3000
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-this-passwords';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 const DB = path.join(__dirname, 'data.json');
 
 app.use(express.json({ limit: '1mb' }));
-
-// Serve all static root assets (index.html, styles.css, app.js)
 app.use(express.static(__dirname));
 
-// Root route handler to explicitly return index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Database helper functions
+// Helper function to send Telegram notifications
+async function sendTelegramNotification(message) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        console.log('Telegram bot token or chat ID missing; skipping notification.');
+        return;
+    }
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: message,
+                parse_mode: 'HTML'
+            })
+        });
+    } catch (err) {
+        console.error('Failed to send Telegram notification:', err.message);
+    }
+}
+
 function load() {
     try {
         return JSON.parse(fs.readFileSync(DB, 'utf8'));
@@ -50,7 +69,6 @@ function admin(req, res, next) {
     next();
 }
 
-// API Routes
 app.get('/api/products', (req, res) => {
     const db = load();
     res.json(db.products);
@@ -60,7 +78,7 @@ app.get('/api/settings', (req, res) => {
     res.json(load().settings);
 });
 
-app.post('/api/orders', (req, res) => {
+app.post('/api/orders', async (req, res) => {
     const db = load();
     const { customer, items, fulfillment, address, email, phone } = req.body || {};
     if (!customer || !email || !phone || !Array.isArray(items) || !items.length) {
@@ -97,16 +115,36 @@ app.post('/api/orders', (req, res) => {
     };
     db.orders.unshift(order);
     save(db);
+
+    // Send Telegram alert for new order
+    await sendTelegramNotification(
+        `🛒 <b>New Order Received!</b>\n` +
+        `<b>Order ID:</b> ${order.id}\n` +
+        `<b>Customer:</b> ${order.customer} (${order.phone})\n` +
+        `<b>Total:</b> $${order.total}\n` +
+        `<b>Fulfillment:</b> ${order.fulfillment}`
+    );
+
     res.json({ ok: true, order: { id: order.id, total: order.total, status: order.status, paymentStatus: order.paymentStatus }, message: 'Test order received. No payment was taken.' });
 });
 
-app.post('/api/support', (req, res) => {
+app.post('/api/support', async (req, res) => {
     const db = load();
     const { name, email, orderId, type, message } = req.body || {};
     if (!name || !email || !type || !message) return res.status(400).json({ error: 'Please complete all required support fields.' });
     const t = { id: 'SUP-' + Date.now().toString(36).toUpperCase(), createdAt: new Date().toISOString(), name, email, orderId: orderId || '', type, message, status: 'Open', adminReply: '' };
     db.tickets.unshift(t);
     save(db);
+
+    // Send Telegram alert for new support request
+    await sendTelegramNotification(
+        `📩 <b>New Support Request!</b>\n` +
+        `<b>Ticket ID:</b> ${t.id}\n` +
+        `<b>From:</b> ${t.name} (${t.email})\n` +
+        `<b>Type:</b> ${t.type}\n` +
+        `<b>Message:</b> ${t.message}`
+    );
+
     res.json({ ok: true, ticketId: t.id, message: 'Your support request was saved for manual review.' });
 });
 
@@ -120,14 +158,26 @@ app.get('/api/admin/data', admin, (req, res) => {
     res.json({ products: db.products, orders: db.orders, tickets: db.tickets, settings: db.settings });
 });
 
-app.post('/api/admin/products', admin, (req, res) => {
+app.post('/api/admin/products', admin, async (req, res) => {
     const db = load();
     const { id, name, category, price, description, image, stock } = req.body || {};
     if (!name || !Number.isFinite(Number(price)) || Number(price) < 0) return res.status(400).json({ error: 'Product name and valid USD price are required.' });
     const product = { id: id || crypto.randomUUID(), name: String(name), category: category || 'Phones', price: Number(price), description: description || '', image: image || '', stock: Math.max(0, Number.parseInt(stock || 0, 10)) };
     const i = db.products.findIndex(p => p.id === product.id);
-    if (i >= 0) db.products[i] = product; else db.products.push(product);
+    const isNew = i < 0;
+    
+    if (!isNew) db.products[i] = product; else db.products.push(product);
     save(db);
+
+    // Send Telegram alert when a product is added or updated
+    await sendTelegramNotification(
+        `📦 <b>Product ${isNew ? 'Added' : 'Updated'}!</b>\n` +
+        `<b>Name:</b> ${product.name}\n` +
+        `<b>Category:</b> ${product.category}\n` +
+        `<b>Price:</b> $${product.price}\n` +
+        `<b>Stock:</b> ${product.stock}`
+    );
+
     res.json({ ok: true, product });
 });
 
@@ -169,7 +219,6 @@ app.patch('/api/admin/settings', admin, (req, res) => {
     res.json({ ok: true, settings: db.settings });
 });
 
-// Bind server to 0.0.0.0 and PORT so Railway can route public web traffic
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`PhoneHub running on port ${PORT}`);
 });
